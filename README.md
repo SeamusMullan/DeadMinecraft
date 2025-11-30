@@ -4,11 +4,11 @@ A simple Minecraft bot that automatically farms wheat using Mineflayer.
 
 ## Features
 
-- 🌾 Automatically harvests mature wheat (growth stage 7)
-- 🌱 Replants harvested wheat with seeds
-- 📦 Collects dropped items (wheat and seeds)
-- 🤖 Simple chat commands (stop, start, come)
-- 🔄 Continuous farming loop
+- Automatically harvests mature wheat (growth stage 7)
+- Replants harvested wheat with seeds
+- Collects dropped items (wheat and seeds)
+- Simple chat commands (stop, start, come)
+- Continuous farming loop
 
 ## Prerequisites
 
@@ -56,6 +56,7 @@ const FARM_RADIUS = 5 // How far to search for crops
 ### 4. Prepare Your Farm
 
 In Minecraft:
+
 1. Create a flat area with farmland (use a hoe on dirt near water)
 2. Plant some initial wheat seeds
 3. Note the coordinates of your farm center (press F3 in-game)
@@ -93,21 +94,25 @@ The bot runs in a continuous loop:
 ## Troubleshooting
 
 ### Bot won't connect
+
 - Check your server IP and port
 - Make sure the Minecraft server is running
 - For online mode servers, you need a valid Minecraft account
 
 ### Bot can't find wheat
+
 - Make sure `FARM_CENTER` coordinates are correct
 - Increase `FARM_RADIUS` if your farm is large
 - Ensure wheat is actually planted and mature
 
 ### Bot won't plant seeds
+
 - Make sure the bot has seeds in its inventory
 - Give the bot seeds manually or let it harvest wheat first
 - Check that farmland is properly hydrated (near water)
 
 ### "Cannot read property" errors
+
 - Make sure all dependencies are installed: `bun install`
 - Check that you're using a compatible Minecraft version (1.16+)
 
@@ -132,6 +137,7 @@ bun farmer-bot.js
 ### Custom Farm Patterns
 
 Modify the `harvestMatureWheat()` and `replantWheat()` functions to:
+
 - Farm different crops (carrots, potatoes, etc.)
 - Use different harvesting patterns
 - Add crop rotation logic
