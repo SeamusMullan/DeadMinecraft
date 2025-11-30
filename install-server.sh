@@ -136,7 +136,6 @@ spawn-animals=false
 spawn-monsters=false
 spawn-npcs=false
 level-name=world
-level-type=minecraft\:flat
 generate-structures=false
 allow-flight=true
 white-list=false
@@ -332,6 +331,10 @@ echo "  ./start-fast.sh  # without update check"
 echo ""
 echo -e "${BLUE}Dynmap:${NC}"
 echo "  http://localhost:8123"
+echo ""
+echo "In your deadminecraft-server directory you may need to run the following to use java 21+:"
+echo "sed -i 's|java -|/usr/lib/jvm/java-21-openjdk/bin/java -|g' start.sh"
+echo "sed -i 's|java -|/usr/lib/jvm/java-21-openjdk/bin/java -|g' start-fast.sh"
 echo ""
 echo -e "${GREEN}Read README.txt for more info${NC}"
 echo ""
