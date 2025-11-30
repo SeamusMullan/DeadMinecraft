@@ -1,0 +1,1083 @@
+openapi: 3.0.3
+info:
+  title: DeadMinecraft Bot API
+  description: |
+    Comprehensive API for managing up to 500 Minecraft bots with advanced features including:
+    - 12 different bot behaviors (farmer, miner, wanderer, builder, guard, pvp, trader, crafter, fisher, xpfarmer, fighter, idle)
+    - Bot groups/teams with formations
+    - Real-time analytics and statistics
+    - Health management and auto-healing
+    - Inventory management
+    - Chat commands and communication
+    - Task queue system
+  version: 1.0.0
+  contact:
+    name: DeadMinecraft API
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+tags:
+  - name: Bots
+    description: Bot management operations
+  - name: Groups
+    description: Group/team management
+  - name: Analytics
+    description: Statistics and analytics
+  - name: Inventory
+    description: Bot inventory operations
+  - name: Tasks
+    description: Bot task queue management
+  - name: Actions
+    description: Bot actions (chat, eat, etc.)
+  - name: Health
+    description: Health check endpoint
+
+paths:
+  # ==================== HEALTH ====================
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: number
+
+  # ==================== BOTS ====================
+  /api/bots:
+    get:
+      tags: [Bots]
+      summary: Get all bots
+      responses:
+        '200':
+          description: List of all bots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bots:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BotState'
+
+    post:
+      tags: [Bots]
+      summary: Create a single bot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BotConfig'
+      responses:
+        '201':
+          description: Bot created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotState'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/bots/bulk:
+    post:
+      tags: [Bots]
+      summary: Create multiple bots
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [baseConfig, count]
+              properties:
+                baseConfig:
+                  $ref: '#/components/schemas/BotConfigBase'
+                count:
+                  type: integer
+                  minimum: 1
+                  maximum: 500
+                prefix:
+                  type: string
+                  default: Bot
+      responses:
+        '201':
+          description: Bots created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: integer
+                  bots:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BotState'
+
+  /api/bots/all/connect:
+    post:
+      tags: [Bots]
+      summary: Connect all bots
+      responses:
+        '200':
+          description: All bots connected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stats:
+                    $ref: '#/components/schemas/Stats'
+
+  /api/bots/all/disconnect:
+    post:
+      tags: [Bots]
+      summary: Disconnect all bots
+      responses:
+        '200':
+          description: All bots disconnected
+
+  /api/bots/all/start:
+    post:
+      tags: [Bots]
+      summary: Start all idle bots
+      responses:
+        '200':
+          description: All idle bots started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  started:
+                    type: integer
+                    description: Number of bots that were started
+                  stats:
+                    $ref: '#/components/schemas/Stats'
+
+  /api/bots/all/stop:
+    post:
+      tags: [Bots]
+      summary: Stop all running bots
+      responses:
+        '200':
+          description: All running bots stopped
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stopped:
+                    type: integer
+                    description: Number of bots that were stopped
+                  stats:
+                    $ref: '#/components/schemas/Stats'
+
+  /api/bots/{username}:
+    get:
+      tags: [Bots]
+      summary: Get specific bot
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotState'
+        '404':
+          description: Bot not found
+
+    delete:
+      tags: [Bots]
+      summary: Delete a bot
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot deleted
+
+  /api/bots/{username}/connect:
+    post:
+      tags: [Bots]
+      summary: Connect a bot
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot connected
+
+  /api/bots/{username}/disconnect:
+    post:
+      tags: [Bots]
+      summary: Disconnect a bot
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot disconnected
+
+  /api/bots/{username}/start:
+    post:
+      tags: [Bots]
+      summary: Start bot behavior
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot behavior started
+
+  /api/bots/{username}/stop:
+    post:
+      tags: [Bots]
+      summary: Stop bot behavior
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot behavior stopped
+
+  /api/bots/{username}/behavior:
+    post:
+      tags: [Bots]
+      summary: Change bot behavior
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                behavior:
+                  $ref: '#/components/schemas/BehaviorType'
+      responses:
+        '200':
+          description: Behavior changed
+
+  /api/bots/{username}/stats:
+    get:
+      tags: [Bots]
+      summary: Get bot statistics
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotStats'
+
+  # ==================== GROUPS ====================
+  /api/groups:
+    get:
+      tags: [Groups]
+      summary: Get all groups
+      responses:
+        '200':
+          description: List of groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  groups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BotGroup'
+
+    post:
+      tags: [Groups]
+      summary: Create a group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, bots]
+              properties:
+                name:
+                  type: string
+                bots:
+                  type: array
+                  items:
+                    type: string
+                leader:
+                  type: string
+                objective:
+                  type: string
+      responses:
+        '201':
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotGroup'
+
+  /api/groups/{groupId}:
+    get:
+      tags: [Groups]
+      summary: Get specific group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Group details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotGroup'
+
+    delete:
+      tags: [Groups]
+      summary: Delete a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Group deleted
+
+  /api/groups/{groupId}/add/{username}:
+    post:
+      tags: [Groups]
+      summary: Add bot to group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot added to group
+
+  /api/groups/{groupId}/remove/{username}:
+    post:
+      tags: [Groups]
+      summary: Remove bot from group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot removed from group
+
+  /api/groups/{groupId}/formation:
+    post:
+      tags: [Groups]
+      summary: Set group formation
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                formation:
+                  $ref: '#/components/schemas/FormationType'
+      responses:
+        '200':
+          description: Formation updated
+
+  /api/groups/{groupId}/objective:
+    post:
+      tags: [Groups]
+      summary: Set group objective
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                objective:
+                  type: string
+      responses:
+        '200':
+          description: Objective updated
+
+  # ==================== ANALYTICS ====================
+  /api/stats:
+    get:
+      tags: [Analytics]
+      summary: Get overall stats
+      responses:
+        '200':
+          description: Overall statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stats'
+
+  /api/analytics:
+    get:
+      tags: [Analytics]
+      summary: Get analytics history
+      parameters:
+        - name: count
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  analytics:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AnalyticsData'
+
+  /api/analytics/latest:
+    get:
+      tags: [Analytics]
+      summary: Get latest analytics snapshot
+      responses:
+        '200':
+          description: Latest analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsData'
+
+  /api/analytics/aggregated:
+    get:
+      tags: [Analytics]
+      summary: Get aggregated statistics
+      responses:
+        '200':
+          description: Aggregated stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AggregatedStats'
+
+  /api/analytics/leaderboard/{stat}:
+    get:
+      tags: [Analytics]
+      summary: Get leaderboard for a stat
+      parameters:
+        - name: stat
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [blocksPlaced, blocksBroken, itemsCollected, itemsCrafted, deaths, kills, damageDealt, damageTaken, distanceTraveled, messagesReceived, messagesSent]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  leaderboard:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        username:
+                          type: string
+                        value:
+                          type: number
+
+  # ==================== TASKS ====================
+  /api/bots/{username}/tasks:
+    get:
+      tags: [Tasks]
+      summary: Get bot tasks
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BotTask'
+
+    post:
+      tags: [Tasks]
+      summary: Add task to bot
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, data]
+              properties:
+                type:
+                  type: string
+                data:
+                  type: object
+                priority:
+                  $ref: '#/components/schemas/TaskPriority'
+                maxRetries:
+                  type: integer
+                  default: 3
+      responses:
+        '201':
+          description: Task added
+
+  /api/bots/{username}/tasks/{taskId}:
+    delete:
+      tags: [Tasks]
+      summary: Remove task from bot
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task removed
+
+  # ==================== INVENTORY ====================
+  /api/bots/{username}/inventory:
+    get:
+      tags: [Inventory]
+      summary: Get bot inventory
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Inventory details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryInfo'
+
+  /api/bots/{username}/inventory/throw:
+    post:
+      tags: [Inventory]
+      summary: Throw away item
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                itemName:
+                  type: string
+                count:
+                  type: integer
+      responses:
+        '200':
+          description: Item thrown
+
+  /api/bots/{username}/inventory/sort:
+    post:
+      tags: [Inventory]
+      summary: Sort bot inventory
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Inventory sorted
+
+  # ==================== ACTIONS ====================
+  /api/bots/{username}/chat:
+    post:
+      tags: [Actions]
+      summary: Send chat message
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                target:
+                  type: string
+                whisper:
+                  type: boolean
+      responses:
+        '200':
+          description: Message sent
+
+  /api/bots/{username}/eat:
+    post:
+      tags: [Actions]
+      summary: Make bot eat food
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                foodName:
+                  type: string
+      responses:
+        '200':
+          description: Bot ate food
+
+# ==================== COMPONENTS ====================
+components:
+  schemas:
+    BotConfig:
+      type: object
+      required: [username, host, port, behavior]
+      properties:
+        username:
+          type: string
+        host:
+          type: string
+        port:
+          type: integer
+        version:
+          type: string
+        behavior:
+          $ref: '#/components/schemas/BehaviorType'
+        autoReconnect:
+          type: boolean
+          default: true
+        reconnectDelay:
+          type: integer
+          default: 5000
+        autoEat:
+          type: boolean
+          default: true
+        autoHeal:
+          type: boolean
+          default: true
+        groupId:
+          type: string
+        enableChatCommands:
+          type: boolean
+          default: true
+
+    BotConfigBase:
+      type: object
+      required: [host, port, behavior]
+      properties:
+        host:
+          type: string
+        port:
+          type: integer
+        version:
+          type: string
+        behavior:
+          $ref: '#/components/schemas/BehaviorType'
+        autoReconnect:
+          type: boolean
+        reconnectDelay:
+          type: integer
+        autoEat:
+          type: boolean
+        autoHeal:
+          type: boolean
+        enableChatCommands:
+          type: boolean
+
+    BotState:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        status:
+          $ref: '#/components/schemas/BotStatus'
+        behavior:
+          $ref: '#/components/schemas/BehaviorType'
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+            z:
+              type: number
+        health:
+          type: number
+        food:
+          type: number
+        oxygen:
+          type: number
+        experience:
+          type: number
+        level:
+          type: integer
+        inventory:
+          $ref: '#/components/schemas/InventoryInfo'
+        equipment:
+          $ref: '#/components/schemas/EquipmentInfo'
+        errors:
+          type: array
+          items:
+            type: string
+        uptime:
+          type: number
+        connectedAt:
+          type: number
+        groupId:
+          type: string
+        currentTask:
+          $ref: '#/components/schemas/TaskInfo'
+        stats:
+          $ref: '#/components/schemas/BotStats'
+
+    BotStatus:
+      type: string
+      enum: [idle, running, error, disconnected, connecting]
+
+    BehaviorType:
+      type: string
+      enum: [farmer, miner, wanderer, builder, fighter, idle, guard, pvp, trader, crafter, fisher, xpfarmer]
+
+    BotStats:
+      type: object
+      properties:
+        blocksPlaced:
+          type: integer
+        blocksBroken:
+          type: integer
+        itemsCollected:
+          type: integer
+        itemsCrafted:
+          type: integer
+        deaths:
+          type: integer
+        kills:
+          type: integer
+        damageDealt:
+          type: number
+        damageTaken:
+          type: number
+        distanceTraveled:
+          type: number
+        messagesReceived:
+          type: integer
+        messagesSent:
+          type: integer
+
+    InventoryInfo:
+      type: object
+      properties:
+        slots:
+          type: integer
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              count:
+                type: integer
+              slot:
+                type: integer
+        usedSlots:
+          type: integer
+        freeSlots:
+          type: integer
+
+    EquipmentInfo:
+      type: object
+      properties:
+        hand:
+          type: string
+        head:
+          type: string
+        torso:
+          type: string
+        legs:
+          type: string
+        feet:
+          type: string
+        offHand:
+          type: string
+
+    BotGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        bots:
+          type: array
+          items:
+            type: string
+        leader:
+          type: string
+        objective:
+          type: string
+        formation:
+          $ref: '#/components/schemas/FormationType'
+        shareInventory:
+          type: boolean
+        shareResources:
+          type: boolean
+
+    FormationType:
+      type: string
+      enum: [spread, line, circle, grid, follow]
+
+    TaskPriority:
+      type: string
+      enum: [low, normal, high, critical]
+
+    TaskInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+        progress:
+          type: number
+        startedAt:
+          type: number
+
+    BotTask:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          type: string
+        data:
+          type: object
+        createdAt:
+          type: number
+        startedAt:
+          type: number
+        completedAt:
+          type: number
+        failedReason:
+          type: string
+        retries:
+          type: integer
+        maxRetries:
+          type: integer
+
+    Stats:
+      type: object
+      properties:
+        total:
+          type: integer
+        connected:
+          type: integer
+        running:
+          type: integer
+        idle:
+          type: integer
+        error:
+          type: integer
+        disconnected:
+          type: integer
+
+    AnalyticsData:
+      type: object
+      properties:
+        timestamp:
+          type: number
+        totalBots:
+          type: integer
+        connectedBots:
+          type: integer
+        runningBots:
+          type: integer
+        totalBlocksMined:
+          type: integer
+        totalItemsCollected:
+          type: integer
+        totalDeaths:
+          type: integer
+        totalKills:
+          type: integer
+        averageHealth:
+          type: number
+        averageFood:
+          type: number
+        groupCount:
+          type: integer
+        errorRate:
+          type: number
+
+    AggregatedStats:
+      type: object
+      properties:
+        totalBlocksMined:
+          type: integer
+        totalItemsCollected:
+          type: integer
+        totalDeaths:
+          type: integer
+        totalKills:
+          type: integer
+        totalDamageDealt:
+          type: number
+        totalDamageTaken:
+          type: number
+        totalDistanceTraveled:
+          type: number
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string

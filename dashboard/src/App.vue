@@ -12,6 +12,8 @@
             :is-connected="isConnected"
             @create-bots="handleCreateBots"
             @connect-all="handleConnectAll"
+            @start-all="handleStartAll"
+            @stop-all="handleStopAll"
             @disconnect-all="handleDisconnectAll"
           />
         </aside>
@@ -132,6 +134,22 @@ const handleDisconnectAll = async () => {
     await api.disconnectAllBots()
   } catch (err) {
     console.error('Failed to disconnect all bots:', err)
+  }
+}
+
+const handleStartAll = async () => {
+  try {
+    await api.startAllBots()
+  } catch (err) {
+    console.error('Failed to start all bots:', err)
+  }
+}
+
+const handleStopAll = async () => {
+  try {
+    await api.stopAllBots()
+  } catch (err) {
+    console.error('Failed to stop all bots:', err)
   }
 }
 </script>

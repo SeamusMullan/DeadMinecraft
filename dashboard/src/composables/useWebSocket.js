@@ -11,6 +11,8 @@ export function useWebSocket(url) {
     error: 0,
     disconnected: 0,
   })
+  const groups = ref([])
+  const analytics = ref(null)
   const chatMessages = ref([])
 
   let ws = null
@@ -57,6 +59,8 @@ export function useWebSocket(url) {
       case 'init':
         bots.value = message.data.bots
         stats.value = message.data.stats
+        groups.value = message.data.groups || []
+        analytics.value = message.data.analytics
         break
 
       case 'botCreated':
@@ -88,6 +92,27 @@ export function useWebSocket(url) {
           chatMessages.value = chatMessages.value.slice(-100)
         }
         break
+
+      case 'botDied':
+        console.log(`Bot ${message.data.username} died`)
+        break
+
+      case 'groupCreated':
+        groups.value.push(message.data)
+        break
+
+      case 'groupRemoved':
+        groups.value = groups.value.filter(g => g.id !== message.data.groupId)
+        break
+
+      case 'botAddedToGroup':
+      case 'botRemovedFromGroup':
+        // Refresh groups (could be optimized with targeted update)
+        break
+
+      case 'analyticsUpdate':
+        analytics.value = message.data
+        break
     }
   }
 
@@ -116,6 +141,8 @@ export function useWebSocket(url) {
     isConnected,
     bots,
     stats,
+    groups,
+    analytics,
     chatMessages,
   }
 }

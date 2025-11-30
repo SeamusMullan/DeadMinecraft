@@ -41,7 +41,13 @@
         <button @click="$emit('connectAll')" class="btn btn-success">
           Connect All
         </button>
-        <button @click="$emit('disconnectAll')" class="btn btn-warning">
+        <button @click="$emit('startAll')" class="btn btn-primary">
+          Start All
+        </button>
+        <button @click="$emit('stopAll')" class="btn btn-warning">
+          Stop All
+        </button>
+        <button @click="$emit('disconnectAll')" class="btn btn-danger">
           Disconnect All
         </button>
       </div>
@@ -67,7 +73,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['createBots', 'connectAll', 'disconnectAll'])
+const emit = defineEmits(['createBots', 'connectAll', 'startAll', 'stopAll', 'disconnectAll'])
 
 const botCount = ref(10)
 const prefix = ref('Bot')

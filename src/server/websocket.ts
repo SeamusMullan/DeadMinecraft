@@ -21,6 +21,8 @@ export class WSServer {
         data: {
           bots: this.botManager.getBotStates(),
           stats: this.botManager.getStats(),
+          groups: this.botManager.getAllGroups(),
+          analytics: this.botManager.getLatestAnalytics(),
         },
       })
 
@@ -68,6 +70,35 @@ export class WSServer {
     this.botManager.on('botChat', (data: any) => {
       this.broadcast({ type: 'botChat', data })
     })
+
+    this.botManager.on('botDied', (data: any) => {
+      this.broadcast({ type: 'botDied', data })
+    })
+
+    // Group events
+    this.botManager.on('groupCreated', (data: any) => {
+      this.broadcast({ type: 'groupCreated', data })
+    })
+
+    this.botManager.on('groupRemoved', (data: any) => {
+      this.broadcast({ type: 'groupRemoved', data })
+    })
+
+    this.botManager.on('botAddedToGroup', (data: any) => {
+      this.broadcast({ type: 'botAddedToGroup', data })
+    })
+
+    this.botManager.on('botRemovedFromGroup', (data: any) => {
+      this.broadcast({ type: 'botRemovedFromGroup', data })
+    })
+
+    // Analytics events - broadcast latest snapshot periodically
+    setInterval(() => {
+      const latest = this.botManager.getLatestAnalytics()
+      if (latest) {
+        this.broadcast({ type: 'analyticsUpdate', data: latest })
+      }
+    }, 5000) // Every 5 seconds
   }
 
   private broadcast(message: any): void {
