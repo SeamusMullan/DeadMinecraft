@@ -65,6 +65,15 @@
       </button>
 
       <button
+        v-if="bot.status === 'idle' || bot.status === 'running'"
+        @click="$emit('view', bot.username)"
+        class="btn btn-viewer"
+        title="Open 3D Viewer"
+      >
+        👁️ View
+      </button>
+
+      <button
         @click="$emit('delete', bot.username)"
         class="btn btn-danger"
       >
@@ -89,7 +98,7 @@ const props = defineProps({
   },
 })
 
-defineEmits(['connect', 'disconnect', 'start', 'stop', 'delete'])
+defineEmits(['connect', 'disconnect', 'start', 'stop', 'delete', 'view'])
 
 const statusClass = computed(() => {
   return `status-${props.bot.status}`
@@ -222,6 +231,11 @@ const formatUptime = (ms) => {
 
 .btn-danger {
   background: #ef4444;
+  color: white;
+}
+
+.btn-viewer {
+  background: #8b5cf6;
   color: white;
 }
 

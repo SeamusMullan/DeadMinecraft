@@ -200,6 +200,45 @@ export function useAPI() {
     return response.json()
   }
 
+  // ==================== VIEWERS ====================
+  const getViewers = async () => {
+    const response = await fetch(`${API_BASE}/viewers`)
+    return response.json()
+  }
+
+  const getViewerStats = async () => {
+    const response = await fetch(`${API_BASE}/viewers/stats`)
+    return response.json()
+  }
+
+  const getViewer = async (username) => {
+    const response = await fetch(`${API_BASE}/viewers/${username}`)
+    return response.json()
+  }
+
+  const startViewer = async (username, options = {}) => {
+    const response = await fetch(`${API_BASE}/viewers/${username}/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(options),
+    })
+    return response.json()
+  }
+
+  const stopViewer = async (username) => {
+    const response = await fetch(`${API_BASE}/viewers/${username}/stop`, {
+      method: 'POST',
+    })
+    return response.json()
+  }
+
+  const stopAllViewers = async () => {
+    const response = await fetch(`${API_BASE}/viewers/all/stop`, {
+      method: 'POST',
+    })
+    return response.json()
+  }
+
   return {
     // Bots
     createBot,
@@ -232,5 +271,12 @@ export function useAPI() {
     getLatestAnalytics,
     getAggregatedStats,
     getLeaderboard,
+    // Viewers
+    getViewers,
+    getViewerStats,
+    getViewer,
+    startViewer,
+    stopViewer,
+    stopAllViewers,
   }
 }

@@ -1,16 +1,19 @@
 import express, { Request, Response } from 'express'
 import cors from 'cors'
 import { BotManager } from '../bots/BotManager'
+import { ViewerManager } from '../utils/ViewerManager'
 import { BotConfig, BehaviorType } from '../types'
 
 export class APIServer {
   private app: express.Application
   private botManager: BotManager
+  private viewerManager: ViewerManager
   private server: any
 
-  constructor(port: number, botManager: BotManager) {
+  constructor(port: number, botManager: BotManager, viewerManager: ViewerManager) {
     this.app = express()
     this.botManager = botManager
+    this.viewerManager = viewerManager
 
     this.app.use(cors())
     this.app.use(express.json())
@@ -473,6 +476,75 @@ export class APIServer {
       }
 
       res.json(bot.getStats())
+    })
+
+    // ==================== VIEWER MANAGEMENT ====================
+
+    // Get all active viewers
+    this.app.get('/api/viewers', (req: Request, res: Response) => {
+      const viewers = this.viewerManager.getAllViewers()
+      const stats = this.viewerManager.getStats()
+      res.json({ viewers, stats })
+    })
+
+    // Get viewer stats
+    this.app.get('/api/viewers/stats', (req: Request, res: Response) => {
+      const stats = this.viewerManager.getStats()
+      res.json(stats)
+    })
+
+    // Get viewer for a specific bot
+    this.app.get('/api/viewers/:username', (req: Request, res: Response) => {
+      const viewer = this.viewerManager.getViewer(req.params.username)
+      if (!viewer) {
+        return res.status(404).json({ error: 'No viewer found for this bot' })
+      }
+      res.json(viewer)
+    })
+
+    // Start viewer for a bot
+    this.app.post('/api/viewers/:username/start', async (req: Request, res: Response) => {
+      try {
+        const bot = this.botManager.getBot(req.params.username)
+        if (!bot) {
+          return res.status(404).json({ error: 'Bot not found' })
+        }
+
+        const { port, firstPerson, viewDistance } = req.body
+        const viewer = await this.viewerManager.startViewer(bot, {
+          port,
+          firstPerson: firstPerson ?? false,
+          viewDistance: viewDistance ?? 6,
+        })
+
+        res.status(201).json({
+          success: true,
+          viewer,
+          url: `http://localhost:${viewer.port}`,
+        })
+      } catch (err: any) {
+        res.status(400).json({ error: err.message })
+      }
+    })
+
+    // Stop viewer for a bot
+    this.app.post('/api/viewers/:username/stop', async (req: Request, res: Response) => {
+      try {
+        await this.viewerManager.stopViewer(req.params.username)
+        res.json({ success: true })
+      } catch (err: any) {
+        res.status(400).json({ error: err.message })
+      }
+    })
+
+    // Stop all viewers
+    this.app.post('/api/viewers/all/stop', async (req: Request, res: Response) => {
+      try {
+        await this.viewerManager.stopAllViewers()
+        res.json({ success: true })
+      } catch (err: any) {
+        res.status(400).json({ error: err.message })
+      }
     })
   }
 

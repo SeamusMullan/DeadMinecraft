@@ -31,6 +31,7 @@
               @start="handleStart"
               @stop="handleStop"
               @delete="handleDelete"
+              @view="handleView"
             />
           </div>
 
@@ -41,20 +42,35 @@
         </div>
       </div>
     </main>
+
+    <ViewerModal
+      :is-open="viewerModalOpen"
+      :bot-username="selectedBotForViewer"
+      :first-person="false"
+      :view-distance="6"
+      @close="handleCloseViewer"
+      @stopped="handleViewerStopped"
+    />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useWebSocket } from './composables/useWebSocket'
 import { useAPI } from './composables/useAPI'
 import StatsBar from './components/StatsBar.vue'
 import BotCard from './components/BotCard.vue'
 import ControlPanel from './components/ControlPanel.vue'
+import ViewerModal from './components/ViewerModal.vue'
 
 const WS_URL = 'ws://localhost:3001'
 
 const { isConnected, bots, stats } = useWebSocket(WS_URL)
 const api = useAPI()
+
+// Viewer state
+const viewerModalOpen = ref(false)
+const selectedBotForViewer = ref('')
 
 const handleCreateBots = async ({ count, prefix, behavior, autoConnect }) => {
   try {
@@ -151,6 +167,19 @@ const handleStopAll = async () => {
   } catch (err) {
     console.error('Failed to stop all bots:', err)
   }
+}
+
+const handleView = (username) => {
+  selectedBotForViewer.value = username
+  viewerModalOpen.value = true
+}
+
+const handleCloseViewer = () => {
+  viewerModalOpen.value = false
+}
+
+const handleViewerStopped = () => {
+  console.log('Viewer stopped for', selectedBotForViewer.value)
 }
 </script>
 

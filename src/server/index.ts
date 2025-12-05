@@ -1,12 +1,14 @@
 import { BotManager } from '../bots/BotManager'
 import { APIServer } from './api'
 import { WSServer } from './websocket'
+import { ViewerManager } from '../utils/ViewerManager'
 import { config } from '../config/default'
 
 export class Server {
   private botManager: BotManager
   private apiServer: APIServer
   private wsServer: WSServer
+  private viewerManager: ViewerManager
 
   constructor() {
     console.log('=== DeadMinecraft Bot Server ===')
@@ -14,10 +16,12 @@ export class Server {
     console.log(`API Port: ${config.server.apiPort}`)
     console.log(`WebSocket Port: ${config.server.wsPort}`)
     console.log(`Minecraft Server: ${config.server.host}:${config.server.port}`)
+    console.log(`Viewer Port Range: 3000-3100`)
     console.log()
 
     this.botManager = new BotManager(config.server.maxBots)
-    this.apiServer = new APIServer(config.server.apiPort, this.botManager)
+    this.viewerManager = new ViewerManager(3100, 3200) // Viewer ports from 3100-3200
+    this.apiServer = new APIServer(config.server.apiPort, this.botManager, this.viewerManager)
     this.wsServer = new WSServer(config.server.wsPort, this.botManager)
 
     this.setupShutdownHandlers()
@@ -27,6 +31,7 @@ export class Server {
     const shutdown = async () => {
       console.log('\n[Server] Shutting down...')
 
+      await this.viewerManager.stopAllViewers()
       await this.botManager.disconnectAllBots()
       this.apiServer.close()
       this.wsServer.close()
@@ -41,6 +46,10 @@ export class Server {
 
   getBotManager(): BotManager {
     return this.botManager
+  }
+
+  getViewerManager(): ViewerManager {
+    return this.viewerManager
   }
 }
 
